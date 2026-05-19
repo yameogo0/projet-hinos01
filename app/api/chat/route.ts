@@ -2,7 +2,7 @@
 import { NextRequest } from 'next/server'
 
 // 🔑 Utilise ta clé AI Gateway existante
-const AI_GATEWAY_API_KEY = process.env.AI_GATEWAY_API_KEY || "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"
+const AI_GATEWAY_API_KEY = process.env.AI_GATEWAY_API_KEY || "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"
 
 export async function POST(request: NextRequest) {
   try {
