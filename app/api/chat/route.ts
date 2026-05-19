@@ -1,33 +1,23 @@
+// app/api/chat/route.ts
 import { generateText } from 'ai'
 import { openai } from '@ai-sdk/openai'
 import { NextRequest } from 'next/server'
+
+// 🔑 Ta clé OpenAI (à remplacer par la tienne)
+const OPENAI_API_KEY = "sk-proj-UDM2SU2_aAhz15eEyieq16PGP_zcZ3bINXS---KGTS2DONCkayKD1-pChFMYuFCKyXr7pACtTcT3B1bkFJh69VkzhJZpGrSjh_7a_8sImcbHSbjszqrF-YoHwDyzP59WxCMldiecLxB6imCtQoxDQCHRga"
 
 // 🔍 Fonction pour détecter automatiquement la langue
 function detectLanguage(text: string): string {
   const textLower = text.toLowerCase()
   
-  // Mots-clés portugais
   const portugueseKeywords = ['obrigado', 'obrigada', 'por favor', 'oi', 'olá', 'tudo bem', 'como vai', 'obg', 'bom dia', 'boa tarde', 'boa noite', 'legal', 'amigo']
-  
-  // Mots-clés anglais
   const englishKeywords = ['hello', 'hi', 'thank you', 'please', 'good morning', 'good afternoon', 'good evening', 'how are you', 'thanks', 'hey']
+  const frenchKeywords = ['bonjour', 'merci', 's\'il vous plaît', 'stp', 'svp', 'salut', 'coucou', 'bonsoir', 'comment ça va', 'ça va']
   
-  // Mots-clés français
-  const frenchKeywords = ['bonjour', 'merci', 's\'il vous plaît', 'stp', 'svp', 'salut', 'coucou', 'bonsoir', 'comment ça va', 'ça va', 'bonsoir']
-  
-  for (const word of portugueseKeywords) {
-    if (textLower.includes(word)) return 'pt'
-  }
-  
-  for (const word of englishKeywords) {
-    if (textLower.includes(word)) return 'en'
-  }
-  
-  for (const word of frenchKeywords) {
-    if (textLower.includes(word)) return 'fr'
-  }
-  
-  return 'fr' // Par défaut
+  for (const word of portugueseKeywords) if (textLower.includes(word)) return 'pt'
+  for (const word of englishKeywords) if (textLower.includes(word)) return 'en'
+  for (const word of frenchKeywords) if (textLower.includes(word)) return 'fr'
+  return 'fr'
 }
 
 export async function POST(request: NextRequest) {
@@ -37,16 +27,11 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     let { message } = body
     
-    // Détection automatique de la langue
     const detectedLanguage = detectLanguage(message)
-    
-    // Si l'utilisateur a choisi une langue manuellement, on utilise celle-ci
-    // Sinon on utilise la langue détectée
     language = body.language || detectedLanguage
     
     console.log("📩 Message reçu:", message)
-    console.log("🔍 Langue détectée automatiquement:", detectedLanguage)
-    console.log("🌍 Langue utilisée pour la réponse:", language)
+    console.log("🔍 Langue détectée:", detectedLanguage)
 
     if (!message) {
       return Response.json({ error: "Message requis" }, { status: 400 })
@@ -54,22 +39,19 @@ export async function POST(request: NextRequest) {
 
     const systemPrompt = getSystemPrompt(language)
 
-    try {
-      // Appel via AI SDK avec OpenAI (utilise Vercel AI Gateway par défaut)
-      const text = await generateText({
-        model: openai('gpt-4-turbo'),
-        system: systemPrompt,
-        prompt: message,
-        temperature: 0.7,
-        maxTokens: 800,
-      })
+    // ✅ Utilisation d'OpenAI avec ta clé
+    process.env.OPENAI_API_KEY = OPENAI_API_KEY
+    
+    const { text } = await generateText({
+      model: openai('gpt-4o-mini'), // ou gpt-4o, gpt-3.5-turbo
+      system: systemPrompt,
+      prompt: message,
+      temperature: 0.7,
+      maxTokens: 800,
+    })
 
-      console.log("✅ Réponse générée avec succès")
-      return Response.json({ response: text.text })
-    } catch (apiError: any) {
-      console.error("❌ Erreur API:", apiError.message)
-      throw apiError
-    }
+    console.log("✅ Réponse générée avec succès")
+    return Response.json({ response: text })
 
   } catch (error: any) {
     console.error("❌ Erreur:", error.message)
@@ -102,57 +84,26 @@ function getSystemPrompt(lang: string): string {
 - Utilise des emojis (🇧🇫, 🇦🇴, 🌾, 🐄, 🐟, 🏭)
 - Donne des conseils pratiques avec des chiffres précis
 - Cite les localités comme Bama, Bagré, Kompienga, Huambo, Cunene
-- Si l'utilisateur ne mentionne pas son pays, demande-le lui
 
 Commence chaque réponse par un emoji pertinent.`,
 
     pt: `Você é Hinos AI, um assistente especialista em agricultura, pecuária, piscicultura e transformação de alimentos na África.
-
-**DADOS ESPECÍFICOS:**
-
-🇧🇫 **BURKINA FASO (BAMA):**
-- Barragem de Bama: arroz irrigado, horticultura (cebola, tomate), piscicultura (tilápia, bagre)
-- Culturas: sorgo, milheto, milho, algodão (maior produtor da África Ocidental), karité, manga
-- Pecuária: bovinos Zebu, ovinos, caprinos
-- Técnicas anti-seca: Zai, barreiras de pedra, meias-luas
-
-🇦🇴 **ANGOLA:**
-- Planaltos (Huambo, Bié): soja, milho, batata
-- Norte: café (recuperação), mandioca, banana
-- Pecuária: bovinos Humbe (Cunene)
-- Piscicultura: tilápia, bagre (rios Kwanza, Cunene)
 
 **REGRAS:**
 - Responda SEMPRE em português
 - Use emojis (🇧🇫, 🇦🇴, 🌾, 🐄, 🐟, 🏭)
 - Dê conselhos práticos com números precisos
 - Cite localidades como Bama, Bagré, Huambo, Cunene
-- Se o usuário não mencionar seu país, pergunte a ele
 
 Comece cada resposta com um emoji relevante.`,
 
     en: `You are Hinos AI, an expert assistant in agriculture, livestock, fish farming and food processing in Africa.
-
-**SPECIFIC DATA:**
-
-🇧🇫 **BURKINA FASO (BAMA):**
-- Bama Dam: irrigated rice, vegetables (onion, tomato), fish farming (tilapia, catfish)
-- Crops: sorghum, millet, maize, cotton (top West African producer), shea, mango
-- Livestock: Zebu cattle, sheep, goats
-- Anti-drought techniques: Zai, stone barriers, half-moons
-
-🇦🇴 **ANGOLA:**
-- Highlands (Huambo, Bié): soybeans, corn, potatoes
-- North: coffee (recovery), cassava, banana
-- Livestock: Humbe cattle (Cunene)
-- Fish farming: tilapia, catfish (Kwanza, Cunene rivers)
 
 **RULES:**
 - Always answer in English
 - Use emojis (🇧🇫, 🇦🇴, 🌾, 🐄, 🐟, 🏭)
 - Give practical advice with precise numbers
 - Mention localities like Bama, Bagré, Huambo, Cunene
-- If the user doesn't mention their country, ask for it
 
 Start each response with a relevant emoji.`
   }
