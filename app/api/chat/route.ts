@@ -2,7 +2,7 @@
 import { NextRequest } from 'next/server'
 
 // 🔑 Ta clé OpenAI
-const OPENAI_API_KEY = "sk-proj-UDM2SU2_aAhz15eEyieq16PGP_zcZ3bINXS---KGTS2DONCkayKD1-pChFMYuFCKyXr7pACtTcT3B1bkFJh69VkzhJZpGrSjh_7a_8sImcbHSbjszqrF-YoHwDyzP59WxCMldiecLxB6imCtQoxDQCHRga"
+const OPENAI_API_KEY = "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"
 
 // 🔍 Fonction pour détecter automatiquement la langue
 function detectLanguage(text: string): string {
