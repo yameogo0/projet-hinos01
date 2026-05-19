@@ -1,8 +1,8 @@
 // app/api/chat/route.ts
 import { NextRequest } from 'next/server'
 
-// 🔑 Ta clé OpenAI
-const OPENAI_API_KEY = "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"
+// 🔑 Ta clé Groq
+const GROQ_API_KEY = "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"
 
 // 🔍 Fonction pour détecter automatiquement la langue
 function detectLanguage(text: string): string {
@@ -61,15 +61,15 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: "Message requis" }, { status: 400 })
     }
 
-    // ✅ Appel direct à l'API OpenAI (sans SDK)
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    // ✅ Appel à l'API Groq
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${OPENAI_API_KEY}`,
+        "Authorization": `Bearer ${GROQ_API_KEY}`,
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: "gpt-4o-mini",
+        model: "llama3-70b-8192",
         messages: [
           { role: "system", content: getSystemPrompt(language) },
           { role: "user", content: message }
@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
 
     if (!response.ok) {
       const error = await response.text()
-      console.error("Erreur OpenAI:", response.status, error)
+      console.error("Erreur Groq:", response.status, error)
       return Response.json({ 
         response: "❌ Désolé, une erreur s'est produite. Veuillez réessayer."
       })
