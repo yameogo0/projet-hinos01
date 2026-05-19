@@ -1,7 +1,7 @@
 // app/api/chat/route.ts
 import { NextRequest } from 'next/server'
 
-// 🔑 Ta clé Groq (directe)
+// 🔑 Ta clé Groq
 const GROQ_API_KEY = "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"
 
 // 🔍 Fonction pour détecter automatiquement la langue
@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: "Message requis" }, { status: 400 })
     }
 
-    // ✅ Appel DIRECT à l'API Groq (sans passer par Vercel Gateway)
+    // ✅ Utilisation du nouveau modèle recommandé
     const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: "llama3-70b-8192",
+        model: "llama-3.3-70b-versatile", // ✅ Nouveau modèle (remplace llama3-70b-8192)
         messages: [
           { role: "system", content: getSystemPrompt(language) },
           { role: "user", content: message }
